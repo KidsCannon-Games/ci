@@ -1,0 +1,6 @@
+etcd:
+  discoverry: "https://discovery.etcd.io/example"
+users:
+  core:
+    passwd: "paste output from `openssl passwd -1`"
+    coreos_ssh_import_github: "example"

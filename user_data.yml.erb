@@ -1,0 +1,62 @@
+#cloud-config
+
+# currently, clustering tools are disabled
+
+coreos:
+  #  etcd:
+  #    discovery: <%= node[:etcd][:discovery] %>
+  #    addr: $private_ipv4:4001
+  #    peer-addr: $private_ipv4:7001
+  units:
+    # - name: etcd.service
+    #   command: start
+    # - name: fleet.service
+    #   command: start
+    - name: sshd.socket
+      content: |
+        [Socket]
+        ListenStream=22
+        Accept=yes
+        FreeBind=true
+    - name: docker.service
+      command: start
+    - name: jenkins.web.service
+      command: start
+      content: |
+        [Unit]
+        Description=Jenkins
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        TimeoutStartSec=0
+        ExecStartPre=/bin/sh -c '/usr/bin/docker kill jenkins || /bin/true'
+        ExecStartPre=/bin/sh -c '/usr/bin/docker rm jenkins || /bin/true'
+        ExecStartPre=/bin/sh -c '/usr/bin/ls /var/jenkins_home 2> /dev/null 2>&1 || /usr/bin/mkdir /var/jenkins_home'
+        ExecStartPre=/bin/sh -c '/usr/bin/chown 1000 /var/jenkins_home'
+        ExecStartPre=/usr/bin/docker pull kidscannongames/jenkins
+        ExecStart=/usr/bin/docker run --name jenkins -t kidscannongames/jenkins -p 8080:8080 -v /home/core/jenkins_home:/var/jenkins_home
+        ExecStop=/usr/bin/docker stop jenkins
+        ExecStopPost=/usr/bin/docker kill jenkins
+users:
+  - name: core
+    passwd: <%= node[:users][:core][:passwd] %>
+    groups:
+      - sudo
+      - docker
+    coreos-ssh-import-github: <%= node[:users][:core][:coreos_ssh_import_github] %>
+write_files:
+  - path: /etc/ssh/sshd_config
+    permissions: 0600
+    owner: root:root
+    content: |
+      # Use most defaults for sshd configuration.
+      UsePrivilegeSeparation sandbox
+      Subsystem sftp internal-sftp
+      ClientAliveInterval 180
+
+      PermitRootLogin no
+      MaxAuthTries 3
+      PasswordAuthentication no
+      ChallengeResponseAuthentication no
+      AllowUsers core
