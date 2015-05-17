@@ -1,4 +1,4 @@
-# CI server for KidsCannon-Games/*
+# CI server configuration for KidsCannon-Games/*
 
 ## Getting Started
 
