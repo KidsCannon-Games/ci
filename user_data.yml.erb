@@ -49,6 +49,8 @@ coreos:
 
         [Service]
         TimeoutStartSec=0
+        ExecStartPre=/bin/sh -c '/usr/bin/docker kill vulcan  || /bin/true'
+        ExecStartPre=/bin/sh -c '/usr/bin/docker rm vulcan || /bin/true'
         ExecStartPre=/usr/bin/docker pull mailgun/vulcand:v0.8.0-beta.2
         ExecStart=/bin/sh -c '/usr/bin/docker run \
           --rm \
